@@ -33,3 +33,4 @@ for(i=0; i<numROIs;i++) // loop through ROIs
 	}	
 run("Select None");
 
+// TODO: add ability to enter data and adjust filenames accordingly
