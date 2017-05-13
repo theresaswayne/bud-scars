@@ -1,8 +1,8 @@
 // Crop_And_Annotate.ijm
-// ImageJ/Fiji macro by Theresa Swayne, tcs6@cumc.columbia.edu, 2017
+// ImageJ/Fiji macro by Theresa Swayne, tcs6 at cumc.columbia.edu, 2017
 // Allows user to provide annotation of each cell in a field, 
 // and produce cropped versions with unique filenames containing annotation 
-// Input: A stack (or single plane) and a set of point ROIs in the ROI manager 
+// Input: A stack (or single plane) and a set of point ROIs in the ROI manager (provided by user)
 // Output: A stack (or single plane) corresponding to 200x200 pixels centered on each point.
 // 		Output images are saved in the same folder as the source image.
 //		and named following the scheme: genotype, initials, Experiment, Stain, Fixed/live, Cell ID, Age
@@ -18,46 +18,104 @@
 // Limitations: If the point is < 200 pixels from an edge the output image is not 200x200, but 
 // 		but only goes to the edge of the image.
 
-// sample images for testing
-open("/Users/confocal/Desktop/input/confocal-series.tif");
-// open("/Users/confocal/Desktop/input/RoiSet.zip"); 
-
 // ------------- setup
 
+roiManager("reset");
+CROPSIZE = 10;
+
+// sample images for testing
+
+// LAB
+// open("/Users/confocal/Desktop/input/confocal-series.tif");
+// open("/Users/confocal/Desktop/input/RoiSet.zip"); 
+
+// HOME
+open("/Users/theresa/Desktop/input/confocal-series.tif");
+open("/Users/theresa/Desktop/input/RoiSet.zip"); 
+
+// get file info TODO: use script parameters
 path = getDirectory("image");
 id = getImageID();
 title = getTitle();
 dotIndex = indexOf(title, ".");
 basename = substring(title, 0, dotIndex);
 
-roiManager("reset");
+// ADD BACK when making interactive
+// roiManager("reset");
 
 // PROMPT USER FOR DATA
 // -- get the parameters that are constant for all images
 // -- genotype, initials, Experiment, Stain, Fixed/live
 
-// INTERACTIVE LOOP
-// 	-- while not clicking 'done'
+genotype = "";
+initials = "";
+experiment = 0;
+stain = "";
+stainNum = 5;
+fixed = "";
+fixedNum = 2;
+stainChoices = newArray("Calcofluor","WGA 488", "WGA 647");
+fixedChoices = newArray("fixed","live");
+imageInfo = "";
 
-	// PROMPT USER TO CLICK ON CELL
-	// -- catch errors like wrong tool
-	
-	// -- auto increment cell #
-	
-	// CAPTURE COORDINATES OF CLICK
-	// 	-- save to mgr presumably
-	
-	// PROMPT USER FOR DATA
-	// -- age
-	
-	// STORE DATA
-	// -- append to csv file using the name of the file
-	// -- roi mgr rename
-	
-	// MARK THE SPOT ON THE IMAGE
-	// -- roiManager("Show All");
+Dialog.create("Enter experiment info");
 
-// 	WHEN THEY CLICK 'DONE' THEN CROP AND SAVE
+Dialog.addString("Genotype (enter D for delta):", "WT");
+Dialog.addString("Experimenter Initials:", "TS");
+Dialog.addNumber("Your Unique Experiment Number:", 0);
+Dialog.addChoice("Stain:", stainChoices);
+Dialog.addChoice("Fixed/Live:",fixedChoices);
+Dialog.show();
+
+genotype = Dialog.getString(); // first text field
+initials = Dialog.getString();
+experiment = Dialog.getNumber();
+stain = Dialog.getChoice();
+fixed = Dialog.getChoice();
+
+// turn choices into codes
+if (stain == "Calcofluor") {
+	stainNum = 0; }
+else if (stain == "WGA 488") {
+	stainNum = 1; }
+else  { // 647
+	stainNum = 2; }
+
+if (fixed == "fixed") {
+	fixedNum = 1; }
+else { // live
+	fixedNum = 0; }
+
+imageInfo = genotype+"_"+initials+"_E"+experiment+"_S"+stainNum+"_F"+fixedNum;
+
+print("You entered:");
+print(imageInfo);
+
+	// INTERACTIVE LOOP
+done = true;
+
+	// 	-- while not clicking 'done'
+	// while done == false:
+
+		// PROMPT USER TO CLICK ON CELL
+		// -- catch errors like wrong tool
+		
+		// -- auto increment cell #
+		
+		// CAPTURE COORDINATES OF CLICK
+		// 	-- save to mgr presumably
+		
+		// PROMPT USER FOR DATA
+		// -- age
+		
+		// STORE DATA
+		// -- append to csv file using the name of the file
+		// -- roi mgr rename
+		
+		// MARK THE SPOT ON THE IMAGE
+		// -- roiManager("Show All");
+	
+	// 	WHEN THEY CLICK 'DONE' THEN CROP AND SAVE
 
 // --------------- final cropping
 
@@ -73,7 +131,7 @@ for(i=0; i<numROIs;i++) // loop through ROIs
 	cropName = basename+i; // TODO: INCLUDE ANNOTATION IN CROPNAME 
 	roiManager("Select", i); 
 	Roi.getCoordinates(x, y); // arrays; first point is all we need
-	run("Specify...", "width=200 height=200 x="+x[0]+" y="+y[0]+" slice=1 centered"); // makes new rectangle ROI around point
+	run("Specify...", "width=&CROPSIZE height=&CROPSIZE x="+x[0]+" y="+y[0]+" slice=1 centered"); // makes new rectangle ROI around point
 	run("Duplicate...", "title=&cropName duplicate"); // creates the cropped stack
 	selectWindow(cropName);
 	saveAs("tiff", path+getTitle);
