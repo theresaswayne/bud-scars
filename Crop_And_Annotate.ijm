@@ -20,6 +20,7 @@
 // 		looking at it simultaneously in another program. Then run the macro. 
 // Limitations: If the point is < 200 pixels from an edge the output image is not 200x200, but 
 // 		but only goes to the edge of the image.
+
 // TODO: Image loop so you can do multiple images in an expt
 
 // ------------- setup
@@ -79,6 +80,8 @@ experiment = Dialog.getNumber();
 stain = Dialog.getChoice();
 fixed = Dialog.getChoice();
 nextCellNum = Dialog.getNumber(); 
+
+// TODO: raise errors if wrong type of input or no input -- check for examples by others
 
 // turn choices into codes
 if (stain == "Calcofluor") {
