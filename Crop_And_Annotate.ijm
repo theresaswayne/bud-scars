@@ -2,11 +2,14 @@
 // ImageJ/Fiji macro by Theresa Swayne, tcs6 at cumc.columbia.edu, 2017
 // Allows user to provide annotation of each cell in a field, 
 // and produce cropped versions with unique filenames containing annotation 
-// Input: A stack (or single plane) and a set of point ROIs in the ROI manager (provided by user)
-// Output: A stack (or single plane) corresponding to 200x200 pixels centered on each point.
+// Input: A stack (or single plane) image. 
+// User clicks on desired cells, and provides annotation data.
+// Output: A stack (or single plane) of 200x200 pixels centered on each point.
 // 		Output images are saved in the same folder as the source image.
-//		and named following the scheme: genotype, initials, Experiment, Stain, Fixed/live, Cell ID, Age
-// 		e.g. WT_WP_E1_S1_F1_C8_A13 would be a WT cell, prepared by Wolfgang P., from the first dataset/Experiment submitted (E1), 
+//		and named following the scheme: 
+// 		genotype, initials, Experiment, Stain, Fixed/live, Cell ID, Age
+// 		e.g. WT_WP_E1_S1_F1_C8_A13 
+//		wild-type cell, prepared by Wolfgang P., from the first dataset submitted (E1), 
 //		Fixed (F1), Cell number 8 (C8) and age 13 (A13)
 //	A CSV file is also produced containing:
 // 		0 cropped filename, 1 original filename, 2-3 center of crop box (XY), 4 genotype, 5 initials,
@@ -17,6 +20,7 @@
 // 		looking at it simultaneously in another program. Then run the macro. 
 // Limitations: If the point is < 200 pixels from an edge the output image is not 200x200, but 
 // 		but only goes to the edge of the image.
+// TODO: Image loop so you can do multiple images in an expt
 
 // ------------- setup
 
@@ -56,6 +60,7 @@ fixed = "";
 fixedNum = 2;
 stainChoices = newArray("Calcofluor","WGA 488", "WGA 647");
 fixedChoices = newArray("fixed","live");
+nextCellNum = 0;
 imageInfo = "";
 
 Dialog.create("Enter experiment info");
@@ -65,6 +70,7 @@ Dialog.addString("Experimenter Initials:", "TS");
 Dialog.addNumber("Your Unique Experiment Number:", 0);
 Dialog.addChoice("Stain:", stainChoices);
 Dialog.addChoice("Fixed/Live:",fixedChoices);
+Dialog.addNumber("Next Cell Number in Experiment:",1); // allows continuing expt
 Dialog.show();
 
 genotype = Dialog.getString(); // first text field
@@ -72,6 +78,7 @@ initials = Dialog.getString();
 experiment = Dialog.getNumber();
 stain = Dialog.getChoice();
 fixed = Dialog.getChoice();
+nextCellNum = Dialog.getNumber(); 
 
 // turn choices into codes
 if (stain == "Calcofluor") {
@@ -90,6 +97,7 @@ imageInfo = genotype+"_"+initials+"_E"+experiment+"_S"+stainNum+"_F"+fixedNum;
 
 print("You entered:");
 print(imageInfo);
+print("and your next cell will be",nextCellNum);
 
 	// INTERACTIVE LOOP
 done = true;
@@ -138,3 +146,6 @@ for(i=0; i<numROIs;i++) // loop through ROIs
 	close();
 	}	
 run("Select None");
+
+// ---  FINISHING
+close();
