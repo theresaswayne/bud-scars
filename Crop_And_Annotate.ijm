@@ -21,12 +21,11 @@
 // Limitations: If the point is < 200 pixels from an edge the output image is not 200x200, but 
 // 		but only goes to the edge of the image.
 
-// TODO: Image loop so you can do multiple images in an expt
+// FUTURE: Image loop so you can do multiple images in an expt
 
-// ------------- setup
+// ------------- SETUP
 
-roiManager("reset");
-CROPSIZE = 10;
+CROPSIZE = 30;
 
 // sample images for testing
 
@@ -36,7 +35,7 @@ CROPSIZE = 10;
 
 // HOME
 open("/Users/theresa/Desktop/input/confocal-series.tif");
-open("/Users/theresa/Desktop/input/RoiSet.zip"); 
+// open("/Users/theresa/Desktop/input/RoiSet.zip"); 
 
 // get file info TODO: use script parameters
 path = getDirectory("image");
@@ -45,12 +44,9 @@ title = getTitle();
 dotIndex = indexOf(title, ".");
 basename = substring(title, 0, dotIndex);
 
-// ADD BACK when making interactive
-// roiManager("reset");
+roiManager("reset");
 
-// PROMPT USER FOR DATA
-// -- get the parameters that are constant for all images
-// -- genotype, initials, Experiment, Stain, Fixed/live
+// get the parameters that are constant for all cells in the image
 
 genotype = "";
 initials = "";
@@ -81,7 +77,7 @@ stain = Dialog.getChoice();
 fixed = Dialog.getChoice();
 nextCellNum = Dialog.getNumber(); 
 
-// TODO: raise errors if wrong type of input or no input -- check for examples by others
+// TODO: raise errors if wrong type of input or no input
 
 // turn choices into codes
 if (stain == "Calcofluor") {
@@ -102,48 +98,65 @@ print("You entered:");
 print(imageInfo);
 print("and your next cell will be",nextCellNum);
 
-	// INTERACTIVE LOOP
+// TODO: create CSV file
+
 done = true;
+cellCount = 0;
+setTool("point");
+run("Point Tool...", "type=Hybrid color=Yellow size=Medium add label");
+age = 0;
 
-	// 	-- while not clicking 'done'
+// INTERACTIVE LOOP
+
 	// while done == false:
-
-		// PROMPT USER TO CLICK ON CELL
-		// -- catch errors like wrong tool
 		
-		// -- auto increment cell #
-		
-		// CAPTURE COORDINATES OF CLICK
-		// 	-- save to mgr presumably
-		
-		// PROMPT USER FOR DATA
-		// -- age
-		
-		// STORE DATA
-		// -- append to csv file using the name of the file
-		// -- roi mgr rename
-		
-		// MARK THE SPOT ON THE IMAGE
-		// -- roiManager("Show All");
+	cellNum = nextCellNum + cellCount;
+	waitForUser("Mark cell", "Click on a bud neck, then click OK");
 	
-	// 	WHEN THEY CLICK 'DONE' THEN CROP AND SAVE
+	// TODO: catch errors like making more than one click, or using the wrong tool
+	
+	Dialog.create("Enter age");
+	Dialog.addNumber("Age of this cell:", 0);
+	Dialog.show();
+	age = Dialog.getNumber();
+	print("Cell number",cellNum,"is",age," generations old.");
+	
+	// TODO: catch errors: decimal, zero, strings, null
+	// TODO: show a confirmation and chance to correct errors
+	
+	numROIs = roiManager("count");
+	roiManager("Select",numROIs-1); // select the most recent ROI
+	roiManager("rename", imageInfo+"_C"+cellNum+"_A"+age);
 
-// --------------- final cropping
+	roiManager("Show All");
+	
+	// TODO: append to csv file including the name of the image file
+
+	// TODO: ask if they have another cell (while loop)
+
+	// TODO: consolidate the dialogs more elegantly
+
+// --------------- CROP AND SAVE
 
 // make sure nothing selected to begin with
 selectImage(id);
 roiManager("Deselect");
 run("Select None");
 
+// loop through ROIs
 numROIs = roiManager("count");
-for(i=0; i<numROIs;i++) // loop through ROIs
+for(i=0; i<numROIs;i++) 
 	{ 
 	selectImage(id); 
-	cropName = basename+i; // TODO: INCLUDE ANNOTATION IN CROPNAME 
 	roiManager("Select", i); 
-	Roi.getCoordinates(x, y); // arrays; first point is all we need
-	run("Specify...", "width=&CROPSIZE height=&CROPSIZE x="+x[0]+" y="+y[0]+" slice=1 centered"); // makes new rectangle ROI around point
-	run("Duplicate...", "title=&cropName duplicate"); // creates the cropped stack
+	
+	cropName = call("ij.plugin.frame.RoiManager.getName", i); // filename will be roi name
+	Roi.getCoordinates(x, y); // x and y are arrays; first point is all we need
+
+	// make new rectangle ROI around point
+	run("Specify...", "width=&CROPSIZE height=&CROPSIZE x="+x[0]+" y="+y[0]+" slice=1 centered"); 
+	// create and save the cropped stack
+	run("Duplicate...", "title=&cropName duplicate"); 
 	selectWindow(cropName);
 	saveAs("tiff", path+getTitle);
 	close();
@@ -152,3 +165,5 @@ run("Select None");
 
 // ---  FINISHING
 close();
+roiManager("reset");
+
