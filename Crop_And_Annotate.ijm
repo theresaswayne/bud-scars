@@ -1,48 +1,61 @@
 // Crop_And_Annotate.ijm
-// ImageJ/Fiji macro by Theresa Swayne, tcs6 at cumc.columbia.edu, 2017
-// Allows user to provide annotation of each cell in a field, 
-// and produce cropped versions with unique filenames containing annotation 
+// ImageJ/Fiji macro
+// Theresa Swayne, tcs6@cumc.columbia.edu, 2017
+// Allows user to crop and annotate age of manually selected cells in an image, 
+// and produce cropped versions with unique filenames containing annotation
+//
 // Input: A stack (or single plane) image. 
-// User clicks on desired cells, and provides annotation data.
-// Output: A stack (or single plane) of 200x200 pixels centered on each point.
+// 		User clicks on desired cells, and provides annotation data.
+// Output: 
+//		1) A stack (or single plane) of 200x200 pixels centered on each point.
+//		2) An ROIset of the points chosen.
 // 		Output images are saved in the same folder as the source image.
 //		and named following the scheme: 
-// 		genotype, initials, Experiment, Stain, Fixed/live, Cell ID, Age
+// 		genotype, initials, _E_xperiment, _S_tain, _F_ixed/live, _C_ell ID, _A_ge
 // 		e.g. WT_WP_E1_S1_F1_C8_A13 
 //		wild-type cell, prepared by Wolfgang P., from the first dataset submitted (E1), 
-//		Fixed (F1), Cell number 8 (C8) and age 13 (A13)
-//	A CSV file is also produced containing:
+//		Fixed (F1), Cell number 8 (C8), age 13 (A13)
+//
+//	TODO: A CSV file will also be produced containing:
 // 		0 cropped filename, 1 original filename, 2-3 center of crop box (XY), 4 genotype, 5 initials,
 //		6 expt, 7 stain, 8 fixed/live, 9 cell ID, 10 age
-//  And also an ROI set for the image
 // 		
 // Usage: Open an image. You should already know the age of each cell in the image, or be
 // 		looking at it simultaneously in another program. Then run the macro. 
-// Limitations: If the point is < 200 pixels from an edge the output image is not 200x200, but 
+//
+// Limitations: If the point is < 200 pixels from an edge the output image is not 200x200,  
 // 		but only goes to the edge of the image.
 
-// FUTURE: Image loop so you can do multiple images in an expt
 
-// ------------- SETUP
+// --------------- sample images for testing
 
-CROPSIZE = 30;
-
-// sample images for testing
+// To test the macro with a specific image, 
+//	1) comment out this whole sample image section
+//	2) open your own image
+//	3) run the macro.  
 
 // LAB
 // open("/Users/confocal/Desktop/input/confocal-series.tif");
-// open("/Users/confocal/Desktop/input/RoiSet.zip"); 
 
 // HOME
-open("/Users/theresa/Desktop/input/confocal-series.tif");
-// open("/Users/theresa/Desktop/input/RoiSet.zip"); 
+// open("/Users/theresa/Desktop/input/confocal-series.tif");
 
-// get file info TODO: use script parameters
+// --------------- end sample image section
+
+
+// ------------- SETUP
+
+// maximum width and height of the final cropped image, in pixels (will be 200)
+CROPSIZE = 200;
+
+// get file info 
+// TODO: use script parameters
 path = getDirectory("image");
 id = getImageID();
 title = getTitle();
 dotIndex = indexOf(title, ".");
 basename = substring(title, 0, dotIndex);
+roiName = basename + "_roiset.zip";
 
 roiManager("reset");
 
@@ -67,10 +80,10 @@ Dialog.addString("Experimenter Initials:", "TS");
 Dialog.addNumber("Your Unique Experiment Number:", 0);
 Dialog.addChoice("Stain:", stainChoices);
 Dialog.addChoice("Fixed/Live:",fixedChoices);
-Dialog.addNumber("Next Cell Number in Experiment:",1); // allows continuing expt
+Dialog.addNumber("Next Cell Number in Experiment:",1); // allows continuing expt on a different image
 Dialog.show();
 
-genotype = Dialog.getString(); // first text field
+genotype = Dialog.getString();
 initials = Dialog.getString();
 experiment = Dialog.getNumber();
 stain = Dialog.getChoice();
@@ -92,6 +105,7 @@ if (fixed == "fixed") {
 else { // live
 	fixedNum = 0; }
 
+// constant image info for all cells
 imageInfo = genotype+"_"+initials+"_E"+experiment+"_S"+stainNum+"_F"+fixedNum;
 
 print("You entered:");
@@ -100,20 +114,23 @@ print("and your next cell will be",nextCellNum);
 
 // TODO: create CSV file
 
-done = true;
+moreCells = "yes";
 cellCount = 0;
 setTool("point");
 run("Point Tool...", "type=Hybrid color=Yellow size=Medium add label");
 age = 0;
 
-// INTERACTIVE LOOP
+// INTERACTIVE LOOP: MARKING AND ANNOTATING CELLS
 
-	// while done == false:
-		
+while (moreCells == "yes") 
+	{
 	cellNum = nextCellNum + cellCount;
 	waitForUser("Mark cell", "Click on a bud neck, then click OK");
 	
+	// TODO: consolidate dialogs for fewer clicks
 	// TODO: catch errors like making more than one click, or using the wrong tool
+	// TODO: try to fix occasionally unresponsive age box -- especially on 2nd cell
+	// 		similar to http://forum.imagej.net/t/dialog-box-not-interactive/2602/7
 	
 	Dialog.create("Enter age");
 	Dialog.addNumber("Age of this cell:", 0);
@@ -123,27 +140,31 @@ age = 0;
 	
 	// TODO: catch errors: decimal, zero, strings, null
 	// TODO: show a confirmation and chance to correct errors
-	
+
+	// store annotations in ROI name
 	numROIs = roiManager("count");
 	roiManager("Select",numROIs-1); // select the most recent ROI
 	roiManager("rename", imageInfo+"_C"+cellNum+"_A"+age);
-
 	roiManager("Show All");
 	
 	// TODO: append to csv file including the name of the image file
 
-	// TODO: ask if they have another cell (while loop)
-
-	// TODO: consolidate the dialogs more elegantly
-
+	// ask if they have another cell
+	Dialog.create("More cells?");
+	Dialog.addChoice("Select 'yes' to mark more cells in this image; select 'no' to crop and save images.", newArray("yes","no"), "yes");
+	Dialog.show();
+	moreCells = Dialog.getChoice();
+	cellCount ++;
+	}
+		
 // --------------- CROP AND SAVE
 
-// make sure nothing selected to begin with
+// make sure nothing is selected to begin with
 selectImage(id);
 roiManager("Deselect");
 run("Select None");
 
-// loop through ROIs
+// crop
 numROIs = roiManager("count");
 for(i=0; i<numROIs;i++) 
 	{ 
@@ -153,17 +174,23 @@ for(i=0; i<numROIs;i++)
 	cropName = call("ij.plugin.frame.RoiManager.getName", i); // filename will be roi name
 	Roi.getCoordinates(x, y); // x and y are arrays; first point is all we need
 
-	// make new rectangle ROI around point
+	// TODO: collect data for CSV file
+
+	// make new rectangle ROI centered on the point
 	run("Specify...", "width=&CROPSIZE height=&CROPSIZE x="+x[0]+" y="+y[0]+" slice=1 centered"); 
-	// create and save the cropped stack
 	run("Duplicate...", "title=&cropName duplicate"); 
 	selectWindow(cropName);
 	saveAs("tiff", path+getTitle);
-	close();
-	}	
+	close(); // cropped image
+	}
 run("Select None");
 
-// ---  FINISHING
-close();
+
+roiManager("save",path+roiName);
+
+// TODO: write to CSV file
+
+// ---  FINISH UP
+close(); // original image
 roiManager("reset");
 
