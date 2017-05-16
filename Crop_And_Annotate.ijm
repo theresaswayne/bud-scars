@@ -21,7 +21,8 @@
 //		6 expt, 7 stain, 8 fixed/live, 9 cell ID, 10 age
 // 		
 // Usage: Open an image. You should already know the age of each cell in the image, or be
-// 		looking at it simultaneously in another program. Then run the macro. 
+// 		looking at it simultaneously in another program. 
+//		Then run the macro. 
 //
 // Limitations: If the point is < 200 pixels from an edge the output image is not 200x200,  
 // 		but only goes to the edge of the image.
