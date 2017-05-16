@@ -1,3 +1,8 @@
+// @File(label = "Input file") sourceimage
+// @File(label = "Output file", style = "directory") dir2
+
+// Note: DO NOT DELETE OR MOVE THE FIRST 2 LINES -- they supply essential parameters.
+
 // Crop_And_Annotate.ijm
 // ImageJ/Fiji macro
 // Theresa Swayne, tcs6@cumc.columbia.edu, 2017
@@ -30,28 +35,23 @@
 
 // --------------- sample images for testing
 
-// To test the macro with a specific image, 
-//	1) comment out this whole sample image section
-//	2) open your own image
-//	3) run the macro.  
-
 // LAB
 // open("/Users/confocal/Desktop/input/confocal-series.tif");
 
 // HOME
-open("/Users/theresa/Desktop/input/confocal-series.tif");
+// open("/Users/theresa/Desktop/input/confocal-series.tif");
 
 // --------------- end sample image section
 
 
 // ------------- SETUP
 
-// maximum width and height of the final cropped image, in pixels (will be 200)
-CROPSIZE = 20;
+// maximum width and height of the final cropped image, in pixels
+CROPSIZE = 200;
 
 // get file info 
-// TODO: use script parameters
-path = getDirectory("image");
+
+open(sourceimage);
 id = getImageID();
 title = getTitle();
 dotIndex = indexOf(title, ".");
@@ -180,13 +180,13 @@ for(i=0; i<numROIs;i++)
 	run("Specify...", "width=&CROPSIZE height=&CROPSIZE x="+x[0]+" y="+y[0]+" slice=1 centered"); 
 	run("Duplicate...", "title=&cropName duplicate"); 
 	selectWindow(cropName);
-	saveAs("tiff", path+getTitle);
+	saveAs("tiff", dir2+getTitle);
 	close(); // cropped image
 	}
 run("Select None");
 
 
-roiManager("save",path+roiName);
+roiManager("save",dir2+roiName);
 
 // TODO: write to CSV file
 
