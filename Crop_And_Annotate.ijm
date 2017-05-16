@@ -39,7 +39,7 @@
 // open("/Users/confocal/Desktop/input/confocal-series.tif");
 
 // HOME
-// open("/Users/theresa/Desktop/input/confocal-series.tif");
+open("/Users/theresa/Desktop/input/confocal-series.tif");
 
 // --------------- end sample image section
 
@@ -47,7 +47,7 @@
 // ------------- SETUP
 
 // maximum width and height of the final cropped image, in pixels (will be 200)
-CROPSIZE = 200;
+CROPSIZE = 20;
 
 // get file info 
 // TODO: use script parameters
@@ -130,11 +130,10 @@ while (moreCells == "yes")
 	
 	// TODO: consolidate dialogs for fewer clicks
 	// TODO: catch errors like making more than one click, or using the wrong tool
-	// TODO: try to fix occasionally unresponsive age box -- especially on 2nd cell
-	// 		similar to http://forum.imagej.net/t/dialog-box-not-interactive/2602/7
 	
 	Dialog.create("Enter age");
 	Dialog.addNumber("Age of this cell:", 0);
+	selectWindow(title); // prevents unresponsive age box when user hits Enter instead of clicking OK
 	Dialog.show();
 	age = Dialog.getNumber();
 	print("Cell number",cellNum,"is",age," generations old.");
