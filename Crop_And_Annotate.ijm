@@ -1,5 +1,5 @@
-// @File(label = "Input file") sourceimage
-// @File(label = "Output file", style = "directory") dir2
+// @File(label = "Image to crop:") sourceimage
+// @File(label = "Output folder:", style = "directory") outputdir
 
 // Note: DO NOT DELETE OR MOVE THE FIRST 2 LINES -- they supply essential parameters.
 
@@ -180,13 +180,13 @@ for(i=0; i<numROIs;i++)
 	run("Specify...", "width=&CROPSIZE height=&CROPSIZE x="+x[0]+" y="+y[0]+" slice=1 centered"); 
 	run("Duplicate...", "title=&cropName duplicate"); 
 	selectWindow(cropName);
-	saveAs("tiff", dir2+getTitle);
+	saveAs("tiff", outputdir+File.separator+getTitle);
 	close(); // cropped image
 	}
 run("Select None");
 
 
-roiManager("save",dir2+roiName);
+roiManager("save",outputdir+File.separator+roiName);
 
 // TODO: write to CSV file
 
