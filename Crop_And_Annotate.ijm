@@ -38,11 +38,12 @@
 // --------------- sample images for testing
 
 // LAB
-// open("/Users/confocal/Desktop/input/confocal-series.tif");
+sourceimage = "/Users/confocal/Desktop/input/confocal-series.tif";
+outputdir = "/Users/confocal/Desktop/output";
 
 // HOME
-sourceimage = "/Users/theresa/Desktop/input/confocal-series.tif";
-outputdir = "/Users/theresa/Desktop/output";
+// sourceimage = "/Users/theresa/Desktop/input/confocal-series.tif";
+// outputdir = "/Users/theresa/Desktop/output";
 
 // --------------- end sample image section
 
