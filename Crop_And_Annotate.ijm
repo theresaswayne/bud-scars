@@ -118,7 +118,7 @@ print("and your next cell will be",nextCellNum);
 
 // TODO: create CSV file
 
-moreCells = "yes";
+moreCells = "Mark more";
 cellCount = 0;
 setTool("point");
 run("Point Tool...", "type=Hybrid color=Yellow size=Medium add label");
@@ -126,19 +126,23 @@ age = 0;
 
 // INTERACTIVE LOOP: MARKING AND ANNOTATING CELLS
 
-while (moreCells == "yes") 
+while (moreCells == "Mark more") 
 	{
 	cellNum = nextCellNum + cellCount;
 	waitForUser("Mark cell", "Click on a bud neck, then click OK");
 	
-	// TODO: consolidate dialogs for fewer clicks
 	// TODO: catch errors like making more than one click, or using the wrong tool
 	
 	Dialog.create("Enter age");
 	Dialog.addNumber("Age of this cell:", 0);
+
+	// ask if they have another cell
+	Dialog.addMessage("Mark more cells in this image,\nor crop and save all cells?");
+	Dialog.addChoice("", newArray("Mark more","Crop and save"), "Mark more");
 	selectWindow(title); // prevents unresponsive age box when user hits Enter instead of clicking OK
 	Dialog.show();
 	age = Dialog.getNumber();
+	moreCells = Dialog.getChoice();
 	print("Cell number",cellNum,"is",age," generations old.");
 	
 	// TODO: catch errors: decimal, zero, strings, null
@@ -151,12 +155,7 @@ while (moreCells == "yes")
 	roiManager("Show All");
 	
 	// TODO: append to csv file including the name of the image file
-
-	// ask if they have another cell
-	Dialog.create("More cells?");
-	Dialog.addChoice("Select 'yes' to mark more cells in this image; select 'no' to crop and save images.", newArray("yes","no"), "yes");
-	Dialog.show();
-	moreCells = Dialog.getChoice();
+	
 	cellCount ++;
 	}
 		
@@ -187,13 +186,12 @@ for(i=0; i<numROIs;i++)
 	close(); // cropped image
 	}
 run("Select None");
-
-
 roiManager("save",outputdir+File.separator+roiName);
 
 // TODO: write to CSV file
 
 // ---  FINISH UP
+print("All files saved.");
 close(); // original image
 roiManager("reset");
 
