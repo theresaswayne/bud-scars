@@ -77,25 +77,42 @@ fixedChoices = newArray("fixed","live");
 nextCellNum = 0;
 imageInfo = "";
 
-Dialog.create("Enter experiment info");
+complete = false;
 
-Dialog.addString("Genotype (enter D for delta):", "WT");
-Dialog.addString("Experimenter Initials:", "TS");
-Dialog.addNumber("Your Unique Experiment Number:", 0);
-Dialog.addChoice("Stain:", stainChoices);
-Dialog.addChoice("Fixed/Live:",fixedChoices);
-Dialog.addNumber("Next Cell Number in Experiment:",1); // allows continuing expt on a different image
-Dialog.show();
-
-genotype = Dialog.getString();
-initials = Dialog.getString();
-experiment = Dialog.getNumber();
-stain = Dialog.getChoice();
-fixed = Dialog.getChoice();
-nextCellNum = Dialog.getNumber(); 
-
-// TODO: raise errors if wrong type of input or no input
-
+while (!complete)
+	{
+	Dialog.create("Enter experiment info");
+	
+	Dialog.addString("Genotype (enter D for delta):", "WT");
+	Dialog.addString("Experimenter Initials:", "TS");
+	Dialog.addNumber("Your Unique Experiment Number:", 0);
+	Dialog.addChoice("Stain:", stainChoices);
+	Dialog.addChoice("Fixed/Live:",fixedChoices);
+	Dialog.addNumber("Next Cell Number in Experiment:",1); // allows continuing expt on a different image
+	selectWindow(title); // prevent unfocused window
+	Dialog.show();
+	
+	genotype = Dialog.getString();
+	initials = Dialog.getString();
+	experiment = Dialog.getNumber();
+	stain = Dialog.getChoice();
+	fixed = Dialog.getChoice();
+	nextCellNum = Dialog.getNumber(); 
+	
+	if ((experiment == 0) | (d2s(experiment,0) == NaN)) // catches 0, letters, and empty field 
+		{
+		showMessage("You must enter an integer for the experiment number.");
+		}
+	else if ((nextCellNum == 0) | (d2s(nextCellNum,0) == NaN))
+		{
+		showMessage("You must enter an integer for the next cell number.");
+		}
+	else
+		{
+		complete = true;
+		}
+	}
+	
 // turn choices into codes
 if (stain == "Calcofluor") {
 	stainNum = 0; }
@@ -131,36 +148,53 @@ while (moreCells == "Mark more")
 	cellNum = nextCellNum + cellCount;
 	waitForUser("Mark cell", "Click on a bud neck, then click OK");
 	
-	// TODO: catch errors like making more than one click, or using the wrong tool
-	
-	Dialog.create("Enter age");
-	Dialog.addNumber("Age of this cell:", 0);
+	// TODO: catch errors like no clicks, >1 click
+	// check for numROIs being too high or low relative to cellCount. 
+	// too many clicks: delete ROIs from end so there are the right number, ask to select cell again
+	// not enough clicks: ask to select cell again
 
-	// ask if they have another cell
-	Dialog.addMessage("Mark more cells in this image,\nor crop and save all cells?");
-	Dialog.addChoice("", newArray("Mark more","Crop and save"), "Mark more");
-	selectWindow(title); // prevents unresponsive age box when user hits Enter instead of clicking OK
-	Dialog.show();
-	age = Dialog.getNumber();
-	moreCells = Dialog.getChoice();
+	ageInput = false;
+	while (!ageInput) // collect valid age info
+		{
+		Dialog.create("Enter age");
+		Dialog.addNumber("Age of this cell:", 0);
+		Dialog.addMessage("Mark more cells in this image,\nor crop and save all cells?");
+		Dialog.addChoice("", newArray("Mark more","Crop and save"), "Mark more");
+		selectWindow(title); // prevents unresponsive age box when user hits Enter instead of clicking OK
+		Dialog.show();
+		age = Dialog.getNumber();
+		moreCells = Dialog.getChoice();
+	
+		if ((age == 0) | (d2s(age,0) == NaN))
+			{
+			showMessage("You must enter an integer for the age.");
+			}
+		else
+			{
+			ageInput = true;
+			}
+		}
+
 	print("Cell number",cellNum,"is",age," generations old.");
 	
-	// TODO: catch errors: decimal, zero, strings, null
-	// TODO: show a confirmation and chance to correct errors
-
 	// store annotations in ROI name
 	numROIs = roiManager("count");
 	roiManager("Select",numROIs-1); // select the most recent ROI
 	roiManager("rename", imageInfo+"_C"+cellNum+"_A"+age);
 	roiManager("Show All");
-	
-	// TODO: append to csv file including the name of the image file
+
+
+
+	// TODO: append to lists or csv file including the name of the image file
 	
 	cellCount ++;
 	}
 		
 // --------------- CROP AND SAVE
 
+
+// TODO: show a confirmation and chance to correct errors in age
+	
 // make sure nothing is selected to begin with
 selectImage(id);
 roiManager("Deselect");
