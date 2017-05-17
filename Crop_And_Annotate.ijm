@@ -1,3 +1,5 @@
+// REMOVE ME TO RESTORE SCRIPT PARAMETERS
+
 // @File(label = "Image to crop:") sourceimage
 // @File(label = "Output folder:", style = "directory") outputdir
 
@@ -39,7 +41,8 @@
 // open("/Users/confocal/Desktop/input/confocal-series.tif");
 
 // HOME
-// open("/Users/theresa/Desktop/input/confocal-series.tif");
+sourceimage = "/Users/theresa/Desktop/input/confocal-series.tif";
+outputdir = "/Users/theresa/Desktop/output";
 
 // --------------- end sample image section
 
