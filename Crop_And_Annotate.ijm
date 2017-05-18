@@ -38,12 +38,12 @@
 // --------------- sample images for testing
 
 // LAB
-sourceimage = "/Users/confocal/Desktop/input/confocal-series.tif";
-outputdir = "/Users/confocal/Desktop/output";
+// sourceimage = "/Users/confocal/Desktop/input/confocal-series.tif";
+// outputdir = "/Users/confocal/Desktop/output";
 
 // HOME
-// sourceimage = "/Users/theresa/Desktop/input/confocal-series.tif";
-// outputdir = "/Users/theresa/Desktop/output";
+sourceimage = "/Users/theresa/Desktop/input/confocal-series.tif";
+outputdir = "/Users/theresa/Desktop/output";
 
 // --------------- end sample image section
 
@@ -86,7 +86,7 @@ while (!complete)
 	
 	Dialog.addString("Genotype (enter D for delta):", "WT");
 	Dialog.addString("Experimenter Initials:", "TS");
-	Dialog.addNumber("Your Unique Experiment Number:", 0);
+	Dialog.addNumber("Your Unique Experiment Number:", 1); // TODO: change to 0 for actual use to make sure user enters a valid number 
 	Dialog.addChoice("Stain:", stainChoices);
 	Dialog.addChoice("Fixed/Live:",fixedChoices);
 	Dialog.addNumber("Next Cell Number in Experiment:",1); // allows continuing expt on a different image
@@ -144,24 +144,59 @@ age = 0;
 
 // INTERACTIVE LOOP: MARKING AND ANNOTATING CELLS
 
+function getCellPosition(cellCount) 
+	{
+	// collects a point ROI and makes sure a point is actually clicked. 
+	// cellCount: integer giving the number of cells before clicking
+	// returns the new cell count (cannot modify the variable within the function)
+	setTool("point");
+	run("Point Tool...", "type=Hybrid color=Yellow size=Medium add label");
+	while (roiManager("count") < (cellCount + 1)) // check if user clicked ok without adding a cell
+		{
+		waitForUser("Mark cell", "Click on a bud neck, then click OK");
+		}
+	newCount = cellCount + 1;
+	return newCount;
+	}
+
 while (moreCells == "Mark more") 
 	{
 	cellNum = nextCellNum + cellCount;
-	waitForUser("Mark cell", "Click on a bud neck, then click OK");
-	
-	// TODO: catch errors like no clicks, >1 click
-	// check for numROIs being too high or low relative to cellCount. 
-	// too many clicks: delete ROIs from end so there are the right number, ask to select cell again
-	// not enough clicks: ask to select cell again
 
+	// allow user to click on a cell
+	cellCount = getCellPosition(cellCount); 
+
+	// check for too many clicks
+	numROIs = roiManager("count");
+
+	//print("There are",numROIs,"ROIs after your clicking, and there should be",cellCount);
+
+	if (numROIs > cellCount) // user clicked too many times
+		{
+		cellCount--; // return cell count to previous value
+
+		// delete extra ROIs
+		while (roiManager("count") > cellCount)
+			{
+			lastROI = roiManager("count")-1;
+			print("deleting ROI",lastROI);
+			roiManager("Select",lastROI); // select the most recent ROI
+			roiManager("Delete");
+			}
+			
+		showMessage("Multiple clicks detected. Deleted last points.\nPlease mark cell again.");
+		cellCount = getCellPosition(cellCount); // ask for mark again
+		}
+
+	// collect valid age
 	ageInput = false;
-	while (!ageInput) // collect valid age info
+	while (!ageInput) 
 		{
 		Dialog.create("Enter age");
 		Dialog.addNumber("Age of this cell:", 0);
 		Dialog.addMessage("Mark more cells in this image,\nor crop and save all cells?");
 		Dialog.addChoice("", newArray("Mark more","Crop and save"), "Mark more");
-		selectWindow(title); // prevents unresponsive age box when user hits Enter instead of clicking OK
+		selectWindow(title); // prevents unresponsive dialog
 		Dialog.show();
 		age = Dialog.getNumber();
 		moreCells = Dialog.getChoice();
@@ -176,7 +211,7 @@ while (moreCells == "Mark more")
 			}
 		}
 
-	print("Cell number",cellNum,"is",age," generations old.");
+	print("Cell number",cellNum,"is",age,"generations old.");
 	
 	// store annotations in ROI name
 	numROIs = roiManager("count");
@@ -185,10 +220,8 @@ while (moreCells == "Mark more")
 	roiManager("Show All");
 
 
-
 	// TODO: append to lists or csv file including the name of the image file
-	
-	cellCount ++;
+
 	}
 		
 // --------------- CROP AND SAVE
