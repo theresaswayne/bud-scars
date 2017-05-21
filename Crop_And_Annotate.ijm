@@ -9,10 +9,10 @@
 // Allows user to crop and annotate age of manually selected cells in an image, 
 // and produce cropped versions with unique filenames containing annotation
 //
-// Input: A stack (or single plane) image. 
+// Input: An image (stack or single plane, 1 or more channels). 
 // 		User clicks on desired cells, and provides annotation data.
 // Output: 
-//		1) A stack (or single plane) of 200x200 pixels centered on each point.
+//		1) A cropped image of 200x200 pixels centered on each point.
 //		2) An ROIset of the points chosen.
 // 		Output images are saved in the same folder as the source image.
 //		and named following the scheme: 
@@ -34,15 +34,13 @@
 
 
 // --------------- sample images for testing
-
 // LAB
 // sourceimage = "/Users/confocal/Desktop/input/confocal-series.tif";
 // outputdir = "/Users/confocal/Desktop/output";
-
+//
 // HOME
 //sourceimage = "/Users/theresa/Desktop/input/confocal-series.tif";
 //outputdir = "/Users/theresa/Desktop/output";
-
 // --------------- end sample image section
 
 
@@ -52,7 +50,6 @@
 CROPSIZE = 200;
 
 // get file info 
-
 open(sourceimage);
 id = getImageID();
 title = getTitle();
@@ -63,7 +60,6 @@ roiName = basename + "_roiset.zip";
 roiManager("reset");
 
 // get the parameters that are constant for all cells in the image
-
 genotype = "";
 initials = "";
 experiment = 0;
@@ -77,18 +73,16 @@ nextCellNum = 0;
 imageInfo = "";
 
 complete = false;
-
-while (!complete)
+while (!complete) // keep showing the dialog until all entries are acceptable
 	{
 	Dialog.create("Enter experiment info");
-	
 	Dialog.addString("Genotype (enter D for delta):", "WT");
 	Dialog.addString("Experimenter Initials:", "TS");
-	Dialog.addNumber("Your Unique Experiment Number:", 1); // TODO: change to 0 for actual use to make sure user enters a valid number 
+	Dialog.addNumber("Your Unique Experiment Number:", 0);
 	Dialog.addChoice("Stain:", stainChoices);
 	Dialog.addChoice("Fixed/Live:",fixedChoices);
 	Dialog.addNumber("Next Cell Number in Experiment:",1); // allows continuing expt on a different image
-	selectWindow(title); // prevent unfocused window
+	selectWindow(title); // prevent error where window becomes unfocused
 	Dialog.show();
 	
 	genotype = Dialog.getString();
@@ -98,11 +92,11 @@ while (!complete)
 	fixed = Dialog.getChoice();
 	nextCellNum = Dialog.getNumber(); 
 	
-	if ((experiment == 0) | (d2s(experiment,0) == NaN)) // catches 0, letters, and empty field 
+	if ((experiment == 0) | (d2s(experiment,0) == NaN)) // catches 0, letters, or empty field 
 		{
 		showMessage("You must enter an integer for the experiment number.");
 		}
-	else if ((nextCellNum == 0) | (d2s(nextCellNum,0) == NaN))
+	else if ((nextCellNum == 0) | (d2s(nextCellNum,0) == NaN)) 
 		{
 		showMessage("You must enter an integer for the next cell number.");
 		}
@@ -117,7 +111,7 @@ if (stain == "Calcofluor") {
 	stainNum = 0; }
 else if (stain == "WGA 488") {
 	stainNum = 1; }
-else  { // 647
+else  { // WGA 647
 	stainNum = 2; }
 
 if (fixed == "fixed") {
@@ -125,7 +119,7 @@ if (fixed == "fixed") {
 else { // live
 	fixedNum = 0; }
 
-// constant image info for all cells
+// collect the parameters that are constant for all cells in the image
 imageInfo = genotype+"_"+initials+"_E"+experiment+"_S"+stainNum+"_F"+fixedNum;
 
 print("You entered:");
@@ -134,22 +128,23 @@ print("and your next cell will be",nextCellNum);
 
 // TODO: create CSV file
 
+// ------------- MARK AND ANNOTATE CELLS
+
 moreCells = "Mark more";
 cellCount = 0;
 setTool("point");
 run("Point Tool...", "type=Hybrid color=Yellow size=Medium add label");
 age = 0;
 
-// INTERACTIVE LOOP: MARKING AND ANNOTATING CELLS
-
 function getCellPosition(cellCount) 
 	{
-	// collects a point ROI and makes sure a point is actually clicked. 
-	// cellCount: integer giving the number of cells before clicking
-	// returns the new cell count (cannot modify the variable within the function)
+	// Lets user create a point ROI, which should correspond to a bud neck. 
+	// Makes sure a point is actually clicked (but it may be > 1 point). 
+	// cellCount: integer, number of cells marked previously
+	// returns: the new cell count
 	setTool("point");
 	run("Point Tool...", "type=Hybrid color=Yellow size=Medium add label");
-	while (roiManager("count") < (cellCount + 1)) // check if user clicked ok without adding a cell
+	while (roiManager("count") < (cellCount + 1)) // check if user clicked ok without marking a cell
 		{
 		waitForUser("Mark cell", "Click on a bud neck, then click OK");
 		}
@@ -159,31 +154,29 @@ function getCellPosition(cellCount)
 
 while (moreCells == "Mark more") 
 	{
-	cellNum = nextCellNum + cellCount;
-
-	// allow user to click on a cell
-	cellCount = getCellPosition(cellCount); 
+	cellNum = nextCellNum + cellCount; // cell number for annotation
+	cellCount = getCellPosition(cellCount);  // prompt user to mark a cell
 
 	// check for too many clicks
 	numROIs = roiManager("count");
-
 	//print("There are",numROIs,"ROIs after your clicking, and there should be",cellCount);
 
 	if (numROIs > cellCount) // user clicked too many times
 		{
-		cellCount--; // return cell count to previous value
+		cellCount--; // return count to previous value
 
 		// delete extra ROIs
 		while (roiManager("count") > cellCount)
 			{
-			lastROI = roiManager("count")-1;
+			lastROI = roiManager("count")-1; // most recent ROI
 			print("deleting ROI",lastROI);
-			roiManager("Select",lastROI); // select the most recent ROI
+			roiManager("Select",lastROI); 
 			roiManager("Delete");
 			}
-			
+
+		// try marking again
 		showMessage("Multiple clicks detected. Deleted last points.\nPlease mark cell again.");
-		cellCount = getCellPosition(cellCount); // ask for mark again
+		cellCount = getCellPosition(cellCount); 
 		}
 
 	// collect valid age
@@ -213,17 +206,15 @@ while (moreCells == "Mark more")
 	
 	// store annotations in ROI name
 	numROIs = roiManager("count");
-	roiManager("Select",numROIs-1); // select the most recent ROI
+	roiManager("Select",numROIs-1); // most recent ROI
 	roiManager("rename", imageInfo+"_C"+cellNum+"_A"+age);
 	roiManager("Show All");
-
 
 	// TODO: append to lists or csv file including the name of the image file
 
 	}
 		
 // --------------- CROP AND SAVE
-
 
 // TODO: show a confirmation and chance to correct errors in age
 	
@@ -238,25 +229,26 @@ for(i=0; i<numROIs;i++)
 	{ 
 	selectImage(id); 
 	roiManager("Select", i); 
-	
 	cropName = call("ij.plugin.frame.RoiManager.getName", i); // filename will be roi name
-	Roi.getCoordinates(x, y); // x and y are arrays; first point is all we need
+	Roi.getCoordinates(x, y); // x and y are arrays
 
 	// TODO: collect data for CSV file
 
-	// make new rectangle ROI centered on the point
-	run("Specify...", "width=&CROPSIZE height=&CROPSIZE x="+x[0]+" y="+y[0]+" slice=1 centered"); 
+	// crop to new rectangle ROI centered on the point
+	run("Specify...", "width=&CROPSIZE height=&CROPSIZE x="+x[0]+" y="+y[0]+" slice=1 centered"); // first point in ROI coord array
 	run("Duplicate...", "title=&cropName duplicate"); 
 	selectWindow(cropName);
 	saveAs("tiff", outputdir+File.separator+getTitle);
 	close(); // cropped image
 	}
 run("Select None");
+
+// save ROIs to show location of each cell
 roiManager("save",outputdir+File.separator+roiName);
 
 // TODO: write to CSV file
 
-// ---  FINISH UP
+// --------  FINISH
 print("All files saved.");
 close(); // original image
 roiManager("reset");
