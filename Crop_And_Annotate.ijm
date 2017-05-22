@@ -220,14 +220,14 @@ while (moreCells == "Mark more")
 	// TODO: figure out how to append properly using array... probably need to append strings and commas instead...
 	
 	imageInfoList = newArray(title, genotype, initials, experiment, stainNum, fixedNum,0,0.0,0.0,0); // for each cell, fill in this list to generate CSV row
-	print(imageInfoList);
+	Array.print(imageInfoList);
 	imageInfoList[6] = cellNum;
 	Roi.getCoordinates(x, y); // x and y are arrays
 	imageInfoList[7] = x[0]; // first point in ROI array is all we need
 	imageInfoList[8] = y[0];
 	imageInfoList[9] = age;
-	print(imageInfoList);
-	File.append(Array.print(imageInfoList),outputdir  + File.separator+ dataName);
+	Array.print(imageInfoList);
+//	File.append(Array.print(imageInfoList),outputdir  + File.separator+ dataName); // this doesn't work
 	
 	roiManager("Show All");
 
