@@ -4,20 +4,19 @@
 // Note: DO NOT DELETE OR MOVE THE FIRST 2 LINES -- they supply essential parameters.
 // manual_Crop_To_Point.ijm
 // ImageJ/Fiji macro by Theresa Swayne, tcs6@cumc.columbia.edu, 2017
-// Input: A stack (or single plane) image
-// Output: A stack (or single plane) corresponding to 200x200 pixels centered on each point.
+// Input: A stack (or single plane) image. User is prompted to select points.
+// Output: A stack (or single plane) corresponding to 200x200 pixels (CROPSIZE parameter) centered on each point.
 // 		Output images are numbered from 0 to the number of ROIs, 
 //		and are saved in the output directory.
 //		Non-rectangular ROIs are cropped to their bounding box.
-// Usage: Open an image. Select the Point (not multi-point) tool. 
-//		Double-click the point tool icon and set option to Add to Manager. 
-//		Click on each cell you want to crop out. 
+// 		If the LUTNAME parameter is set, the cropped images will have that LUT.  
+//		An ROIset is saved showing the points on the original image.
+// Usage: Adjust CROPSIZE and LUTNAME as desired. Open an image. 
 //		Then run the macro. 
-// Limitations: If the point is < 200 pixels from an edge the output image is not 200x200, but 
+// Limitations: If the point is < 200 pixels from an edge the output image is not 200x200,  
 // 		but only goes to the edge of the image.
 
 // adjustable parameters
-
 LUTNAME = "Fire"; // the LUT of the cropped image. For no change use ""
 CROPSIZE = 200; // // maximum width and height of the final cropped image, in pixels
 
@@ -30,15 +29,14 @@ basename = substring(title, 0, dotIndex);
 roiName = basename + "_roiset.zip"; 
 dataName = basename + "_data.csv"
 
-// make sure nothing selected to begin with
+// setup
 selectImage(id);
 roiManager("Reset");
 run("Select None");
-
-// collect points
 setTool("point");
 run("Point Tool...", "type=Hybrid color=Yellow size=Medium add label");
 
+// collect points
 waitForUser("Mark cells", "Click on all of your cells, then click OK");
 
 // adjust LUT for ease of visualization
@@ -51,10 +49,10 @@ numROIs = roiManager("count");
 for(i=0; i<numROIs;i++) // loop through ROIs
 	{ 
 	selectImage(id); 
-	cropName = basename+i; // TODO: enter data and name file following the annotation scheme
+	cropName = basename+i;
 	roiManager("Select", i); 
-	Roi.getCoordinates(x, y); // arrays; first point is all we need
-	run("Specify...", "width=200 height=200 x="+x[0]+" y="+y[0]+" slice=1 centered"); // makes new rectangle ROI around point
+	Roi.getCoordinates(x, y); // arrays
+	run("Specify...", "width=200 height=200 x="+x[0]+" y="+y[0]+" slice=1 centered"); // makes new rectangle ROI centered on the point
 	run("Duplicate...", "title=&cropName duplicate"); // creates the cropped stack
 	selectWindow(cropName);
 	saveAs("tiff", outputdir + File.separator + getTitle);
@@ -62,5 +60,5 @@ for(i=0; i<numROIs;i++) // loop through ROIs
 	}	
 run("Select None");
 
-// save ROIs to show location of each cell
+// save ROIs to show location of each cell within the field
 roiManager("save",outputdir+File.separator+roiName);
