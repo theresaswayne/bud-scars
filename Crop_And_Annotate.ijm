@@ -32,18 +32,6 @@
 // Limitations: If the point is < 200 pixels from an edge the output image is not 200x200,  
 // 		but only goes to the edge of the image.
 
-
-// --------------- sample images for testing
-// LAB
-// sourceimage = "/Users/confocal/Desktop/input/confocal-series.tif";
-// outputdir = "/Users/confocal/Desktop/output";
-//
-// HOME
-//sourceimage = "/Users/theresa/Desktop/input/confocal-series.tif";
-//outputdir = "/Users/theresa/Desktop/output";
-// --------------- end sample image section
-
-
 // ------------- SETUP
 
 // maximum width and height of the final cropped image, in pixels
@@ -84,7 +72,7 @@ while (!complete) // keep showing the dialog until all entries are acceptable
 	Dialog.create("Enter experiment info");
 	Dialog.addString("Genotype (enter D for delta):", "WT");
 	Dialog.addString("Experimenter Initials:", "TS");
-	Dialog.addNumber("Your Unique Experiment Number:", 0);  
+	Dialog.addNumber("Your Unique Experiment Number:", 1);  // TODO: change to 0 for actual use
 	Dialog.addChoice("Stain:", stainChoices);
 	Dialog.addChoice("Fixed/Live:",fixedChoices);
 	Dialog.addNumber("Next Cell Number in Experiment:",1); // allows continuing expt on a different image
@@ -191,9 +179,9 @@ while (moreCells == "Mark more")
 	while (!ageInput) 
 		{
 		Dialog.create("Enter age");
-		Dialog.addNumber("Age of this cell:", 0);
+		Dialog.addNumber("Age of this cell:", 1); // TODO: replace with 0 for actual use
 		Dialog.addMessage("Mark more cells in this image,\nor crop and save all cells?");
-		Dialog.addChoice("", newArray("Mark more","Crop and save"), "Mark more");
+		Dialog.addChoice("", newArray("Mark more","Crop and save"), "Crop and save"); // TODO: replace with Mark More for actual use
 		selectWindow(title); // prevents unresponsive dialog
 		Dialog.show();
 		age = Dialog.getNumber();
@@ -220,18 +208,27 @@ while (moreCells == "Mark more")
 	// TODO: figure out how to append properly using array... probably need to append strings and commas instead...
 	
 	imageInfoList = newArray(title, genotype, initials, experiment, stainNum, fixedNum,0,0.0,0.0,0); // for each cell, fill in this list to generate CSV row
-	Array.print(imageInfoList);
+	//Array.print(imageInfoList);
 	imageInfoList[6] = cellNum;
 	Roi.getCoordinates(x, y); // x and y are arrays
 	imageInfoList[7] = x[0]; // first point in ROI array is all we need
 	imageInfoList[8] = y[0];
 	imageInfoList[9] = age;
+	print("array is:");
 	Array.print(imageInfoList);
-//	File.append(Array.print(imageInfoList),outputdir  + File.separator+ dataName); // this doesn't work
+
+	// construct a string from the array
+	imageInfoString = "";
+	for (i=0; i<imageInfoList.length; i++) {
+          imageInfoString = imageInfoString + imageInfoList[i] + ",";
+	}
+	// remove final comma
+	imageInfoString = substring(imageInfoString, 0, lengthOf(imageInfoString)-1);
+	print("ImageInfoString",imageInfoString);
+	File.append(imageInfoString,outputdir  + File.separator+ dataName);
 	
 	roiManager("Show All");
 
-	// TODO: append to lists or csv file including the name of the image file
 	
 	} // end of "mark more" loop
 		
