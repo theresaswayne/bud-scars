@@ -20,16 +20,15 @@
 // 		e.g. WT_WP_E1_S1_F1_C8_A13 
 //		wild-type cell, prepared by Wolfgang P., from the first dataset submitted (E1), 
 //		Fixed (F1), Cell number 8 (C8), age 13 (A13)
-//
-//	TODO: A CSV file will also be produced containing:
-// 		0 cropped filename, 1 original filename, 2-3 center of crop box (XY), 4 genotype, 5 initials,
-//		6 expt, 7 stain, 8 fixed/live, 9 cell ID, 10 age
+//		3) A CSV file containing columns:
+//	 		0 cropped filename, 1 original filename, 2-3 center of crop box (XY), 4 genotype, 5 user initials,
+//			6 expt, 7 stain, 8 fixed/live, 9 cell ID, 10 age
 // 		
-// Usage: Open an image. You should already know the age of each cell in the image, or be
-// 		looking at it simultaneously in another program. 
-//		Then run the macro. 
+// Usage: Create a folder to store output files (cropped images, ROIs and CSV). Run the macro.
+//		You'll be prompted to open an image, for which you should already know the age of each cell, or be
+// 		able to determine it while running the macro. You will be able to scroll through the slices. 
 //
-// Limitations: If the point is < 200 pixels from an edge the output image is not 200x200,  
+// Limitations: If the marked point is < 200 pixels from an edge, the output image is not 200x200,  
 // 		but only goes to the edge of the image.
 
 // ------------- SETUP
@@ -72,10 +71,10 @@ while (!complete) // keep showing the dialog until all entries are acceptable
 	Dialog.create("Enter experiment info");
 	Dialog.addString("Genotype (enter D for delta):", "WT");
 	Dialog.addString("Experimenter Initials:", "TS");
-	Dialog.addNumber("Your Unique Experiment Number:", 1);  // TODO: change to 0 for actual use
+	Dialog.addNumber("Your Unique Experiment Number:", 1);
 	Dialog.addChoice("Stain:", stainChoices);
 	Dialog.addChoice("Fixed/Live:",fixedChoices);
-	Dialog.addNumber("Next Cell Number in Experiment:",1); // allows continuing expt on a different image
+	Dialog.addNumber("Next Cell Number in Experiment:",0); // allows continuing expt on a different image
 	selectWindow(title); // prevent error where window becomes unfocused
 	Dialog.show();
 	
@@ -179,9 +178,9 @@ while (moreCells == "Mark more")
 	while (!ageInput) 
 		{
 		Dialog.create("Enter age");
-		Dialog.addNumber("Age of this cell:", 1); // TODO: replace with 0 for actual use
+		Dialog.addNumber("Age of this cell:", 0);
 		Dialog.addMessage("Mark more cells in this image,\nor crop and save all cells?");
-		Dialog.addChoice("", newArray("Mark more","Crop and save"), "Crop and save"); // TODO: replace with Mark More for actual use
+		Dialog.addChoice("", newArray("Mark more","Crop and save"), "Mark more");
 		selectWindow(title); // prevents unresponsive dialog
 		Dialog.show();
 		age = Dialog.getNumber();
@@ -204,19 +203,14 @@ while (moreCells == "Mark more")
 	roiManager("Select",numROIs-1); // most recent ROI
 	roiManager("rename", imageInfo+"_C"+cellNum+"_A"+age);
 	
-	// TODO: grab cell number, X and Y, and age, and append to imageInfoList, then append to the csv
-	// TODO: figure out how to append properly using array... probably need to append strings and commas instead...
-	
 	imageInfoList = newArray(title, genotype, initials, experiment, stainNum, fixedNum,0,0.0,0.0,0); // for each cell, fill in this list to generate CSV row
-	//Array.print(imageInfoList);
 	imageInfoList[6] = cellNum;
 	Roi.getCoordinates(x, y); // x and y are arrays
 	imageInfoList[7] = x[0]; // first point in ROI array is all we need
 	imageInfoList[8] = y[0];
 	imageInfoList[9] = age;
-	print("array is:");
-	Array.print(imageInfoList);
-
+	//Array.print(imageInfoList); // check that info is ok
+	
 	// construct a string from the array
 	imageInfoString = "";
 	for (i=0; i<imageInfoList.length; i++) {
@@ -224,7 +218,7 @@ while (moreCells == "Mark more")
 	}
 	// remove final comma
 	imageInfoString = substring(imageInfoString, 0, lengthOf(imageInfoString)-1);
-	print("ImageInfoString",imageInfoString);
+//	print("ImageInfoString",imageInfoString); // check that info string is ok
 	File.append(imageInfoString,outputdir  + File.separator+ dataName);
 	
 	roiManager("Show All");
