@@ -14,3 +14,27 @@
 //  angle -- no constraints
 // do a large ellipse first and then 0-3 smaller ones based on the size of the large.
 
+// the images will mimic segmented, fitted ellipses
+// setup
+
+// image specs
+NUM_IMAGES = 1; // number of random images to generate
+IMAGE_SIZE = 200; // length and width of image
+
+// ellipse specs
+NUM_ELLIPSES_MAX =  4; // maximum number of ellipses (minimum is 1)
+LENGTH_MAX = 100; // maximum axis length
+ASPECT_MAX = 2; // maximum aspect ratio (minimum is 1)
+
+
+
+// multiple images loop
+for (i = 1; i < (NUM_IMAGES+1); i++);
+	{
+	// image creation loop
+
+	// 
+	// create image
+	newImage("rando_"+i+", "8-bit white", "+IMAGE_SIZE+","+IMAGE_SIZE+", 1);
+	print("image",i,"created");
+	}
