@@ -24,6 +24,7 @@ setBatchMode(true);
 
 CROPSIZE = 100; // final image size in pixels
 run("Set Measurements...", "centroid fit display redirect=None decimal=3"); // fit ellipse and record centroid
+run("Colors...", "foreground=white background=black selection=yellow");
 
 n = 0; // number of images
 processFolder(inputdir); // starts the actual processing 
@@ -54,7 +55,7 @@ function processImage(dir1, name)
 
 	// threshold and fit artificial images
 	run("Select None");
-	setAutoThreshold("Default");
+	setAutoThreshold("Default dark");
 	setOption("BlackBackground", true);
 	run("Convert to Mask");
 	run("Analyze Particles...", "display exclude clear add");
